@@ -196,6 +196,13 @@ body {
     display: block;
 }
 
+@media (max-width: 480px) {
+    .calendar-view {
+        padding: 10px 5px;
+        max-width: 100vw;
+    }
+}
+
 .calendar-header {
     display: flex;
     justify-content: space-between;
@@ -206,6 +213,17 @@ body {
     border-radius: 12px;
     border: var(--yarn-border-width) solid var(--soft-pink);
     box-shadow: 0 2px 4px rgba(244, 209, 220, 0.3);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+}
+
+@media (max-width: 480px) {
+    .calendar-header {
+        padding: 10px 5px;
+        margin-bottom: 10px;
+        border-width: 2px;
+    }
 }
 
 .calendar-header h2 {
@@ -524,18 +542,27 @@ body {
     }
 
     .calendar-header h2 {
-        font-size: 18px;
-    }
-    
-    .calendar-view {
-        padding: 10px 5px;
+        font-size: 16px;
     }
     
     #calendar-container {
         width: 100%;
-        max-width: 100%;
+        max-width: 100vw;
         overflow-x: hidden;
         box-sizing: border-box;
+        padding: 0;
+    }
+    
+    body {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+    }
+    
+    html {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
     }
 }
 
@@ -564,20 +591,30 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: none;
+    background: radial-gradient(circle at center, transparent 0%, transparent 25%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 0.6) 40%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.95) 60%, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 1) 100%);
+    display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10000;
     opacity: 0;
-    transition: opacity 0.3s ease;
     pointer-events: none;
+    transition: opacity 3s ease;
 }
 
 .easter-egg-overlay.active {
-    display: flex;
     opacity: 1;
     pointer-events: auto;
+    background: radial-gradient(circle at center, transparent 0%, transparent 25%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 0.6) 40%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.95) 60%, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 1) 100%);
+}
+
+.easter-egg-overlay.fade-in {
+    opacity: 1;
+    background: radial-gradient(circle at center, transparent 0%, transparent 25%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 0.6) 40%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.95) 60%, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 1) 100%);
+}
+
+.easter-egg-overlay.fade-out {
+    opacity: 0;
+    background: radial-gradient(circle at center, transparent 0%, transparent 25%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 0.6) 40%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.95) 60%, rgba(0, 0, 0, 1) 70%, rgba(0, 0, 0, 1) 100%);
 }
 
 .easter-egg-image {
@@ -585,18 +622,19 @@ body {
     max-height: 90%;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    animation: easterEggPop 0.3s ease;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 3s ease, transform 3s ease;
 }
 
-@keyframes easterEggPop {
-    0% {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
+.easter-egg-overlay.fade-in .easter-egg-image {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.easter-egg-overlay.fade-out .easter-egg-image {
+    opacity: 0;
+    transform: scale(0.9);
 }
 
 /* Appointment Form Specific Styles */

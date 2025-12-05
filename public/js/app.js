@@ -45,10 +45,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (title && easterEggOverlay) {
         title.style.cursor = 'pointer';
         title.addEventListener('click', () => {
-            easterEggOverlay.classList.add('active');
+            // Reset overlay state
+            easterEggOverlay.classList.remove('active', 'fade-in', 'fade-out');
+            
+            // Prepare audio
+            const audio = new Audio('/audio/dark-mystery-intro.mp3');
+            audio.volume = 0.7; // Set volume to 70%
+            
+            // Show overlay and start fade-in (3 seconds)
+            easterEggOverlay.classList.add('active', 'fade-in');
+            
+            // Play audio after 1.5 seconds from click
             setTimeout(() => {
-                easterEggOverlay.classList.remove('active');
-            }, 2000);
+                audio.play().catch(err => {
+                    console.log('Audio file not found. Please download the sound from https://pixabay.com/sound-effects/dark-mystery-intro-398656/ and save it as public/audio/dark-mystery-intro.mp3');
+                });
+            }, 1500); // Audio starts 1.5s after click
+            
+            // After fade-in (3s) + visible time (3s) = 6s, start fade-out
+            setTimeout(() => {
+                easterEggOverlay.classList.remove('fade-in');
+                easterEggOverlay.classList.add('fade-out');
+                
+                // After fade-out completes (3s), remove overlay and stop audio
+                setTimeout(() => {
+                    easterEggOverlay.classList.remove('active', 'fade-out');
+                    // Stop audio if still playing
+                    audio.pause();
+                    audio.currentTime = 0;
+                }, 3000); // Fade-out duration (3 seconds)
+            }, 6000); // Fade-in (3s) + visible (3s) = 6s
         });
     }
     
