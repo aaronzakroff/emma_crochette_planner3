@@ -9,19 +9,33 @@ class Database {
 
     connect() {
         return new Promise((resolve, reject) => {
-            // Ensure data directory exists before opening database
-            const dataDir = path.join(__dirname, '../data');
-            if (!fs.existsSync(dataDir)) {
-                fs.mkdirSync(dataDir, { recursive: true });
+            // On Vercel, use /tmp directory (writable in serverless functions)
+            // Otherwise use the data directory
+            const isVercel = process.env.VERCEL || process.env.VERCEL_ENV;
+            let dbPath;
+            
+            if (isVercel) {
+                // Use /tmp for Vercel serverless functions
+                const tmpDir = '/tmp';
+                if (!fs.existsSync(tmpDir)) {
+                    fs.mkdirSync(tmpDir, { recursive: true });
+                }
+                dbPath = path.join(tmpDir, 'crochet_calendar.db');
+            } else {
+                // Use local data directory for development
+                const dataDir = path.join(__dirname, '../data');
+                if (!fs.existsSync(dataDir)) {
+                    fs.mkdirSync(dataDir, { recursive: true });
+                }
+                dbPath = path.join(dataDir, 'crochet_calendar.db');
             }
 
-            const dbPath = path.join(__dirname, '../data', 'crochet_calendar.db');
             this.db = new sqlite3.Database(dbPath, (err) => {
                 if (err) {
                     console.error('Error opening database:', err);
                     reject(err);
                 } else {
-                    console.log('Connected to SQLite database');
+                    console.log('Connected to SQLite database at:', dbPath);
                     this.initializeTables().then(resolve).catch(reject);
                 }
             });

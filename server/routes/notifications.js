@@ -3,6 +3,19 @@ const router = express.Router();
 const database = require('../models/database');
 const notificationService = require('../services/notificationService');
 
+// Ensure database is initialized before handling requests
+router.use(async (req, res, next) => {
+    if (!database.getDb()) {
+        try {
+            await database.connect();
+        } catch (err) {
+            console.error('Database connection error:', err);
+            return res.status(500).json({ error: 'Database connection failed' });
+        }
+    }
+    next();
+});
+
 // Get VAPID public key
 router.get('/vapid-key', (req, res) => {
     res.json({ publicKey: notificationService.getVAPIDPublicKey() });

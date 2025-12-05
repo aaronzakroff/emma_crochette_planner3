@@ -40,24 +40,61 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
 });
 
-// Initialize database and start server
-database.connect()
-    .then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server is running on http://localhost:${PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.error('Failed to start server:', err);
-        process.exit(1);
-    });
+// Initialize database (lazy initialization for Vercel)
+let dbInitialized = false;
+let dbInitPromise = null;
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-    console.log('\nShutting down server...');
-    await database.close();
-    process.exit(0);
-});
+async function initializeDatabase() {
+    if (!dbInitialized) {
+        if (!dbInitPromise) {
+            dbInitPromise = database.connect()
+                .then(() => {
+                    dbInitialized = true;
+                    console.log('Database initialized');
+                })
+                .catch((err) => {
+                    console.error('Failed to initialize database:', err);
+                    // Don't exit on Vercel - allow the function to still serve static files
+                    if (!process.env.VERCEL) {
+                        process.exit(1);
+                    }
+                });
+        }
+        return dbInitPromise;
+    }
+    return Promise.resolve();
+}
+
+// Only start listening if not on Vercel (Vercel uses serverless functions)
+if (!process.env.VERCEL) {
+    database.connect()
+        .then(() => {
+            app.listen(PORT, () => {
+                console.log(`Server is running on http://localhost:${PORT}`);
+            });
+        })
+        .catch((err) => {
+            console.error('Failed to start server:', err);
+            process.exit(1);
+        });
+
+    // Graceful shutdown
+    process.on('SIGINT', async () => {
+        console.log('\nShutting down server...');
+        await database.close();
+        process.exit(0);
+    });
+} else {
+    // On Vercel, initialize database on first request
+    // This ensures the database is ready when routes are accessed
+    initializeDatabase().catch(err => {
+        console.error('Database initialization error on Vercel:', err);
+    });
+}
+
+// Export app for Vercel serverless functions
+module.exports = app;
+
 
 
 

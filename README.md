@@ -179,6 +179,37 @@ Default port is 3000. Set `PORT` environment variable to change:
 PORT=8080 npm start
 ```
 
+## Vercel Deployment
+
+This app is configured to deploy on Vercel. The database uses SQLite stored in `/tmp` directory on Vercel (data persists during function execution but resets between deployments).
+
+### Deploying to Vercel
+
+1. **Connect your GitHub repository to Vercel:**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "New Project"
+   - Import your GitHub repository
+
+2. **Environment Variables (Optional):**
+   - Add `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` in Vercel project settings if you want persistent notification keys
+   - Otherwise, keys will be auto-generated (but will change on each deployment)
+
+3. **Deploy:**
+   - Vercel will automatically detect the `vercel.json` configuration
+   - The app will be deployed as serverless functions
+   - Your site will be available at `https://your-project.vercel.app`
+
+### Important Notes for Vercel:
+
+- **Database Persistence**: SQLite data in `/tmp` is temporary and will reset between deployments. For production, consider using:
+  - Vercel Postgres (free tier available)
+  - Supabase (free tier available)
+  - Or another serverless database solution
+
+- **Serverless Functions**: The app runs as serverless functions, so cold starts may occur on first request
+
+- **Static Files**: All files in the `public/` directory are served automatically
+
 ## License
 
 ISC
