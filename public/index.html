@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Crochet Calendar">
+    <meta name="theme-color" content="#B8D4E3">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Crochet Lesson Calendar</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/calendar.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation Header -->
+        <header class="app-header">
+            <h1>Crochet Lessons</h1>
+            <div class="header-actions">
+                <button id="notification-settings-btn" class="icon-btn" aria-label="Notification Settings">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                </button>
+                <button id="add-client-btn" class="icon-btn" aria-label="Add Client">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- View Toggle -->
+        <div class="view-toggle">
+            <button id="monthly-view-btn" class="toggle-btn active">Monthly</button>
+            <button id="weekly-view-btn" class="toggle-btn">Weekly</button>
+        </div>
+
+        <!-- Calendar Container -->
+        <main id="calendar-container">
+            <!-- Monthly Calendar View -->
+            <div id="monthly-calendar" class="calendar-view active">
+                <div class="calendar-header">
+                    <button id="prev-month" class="nav-btn">‹</button>
+                    <h2 id="current-month"></h2>
+                    <button id="next-month" class="nav-btn">›</button>
+                </div>
+                <div id="monthly-grid" class="calendar-grid"></div>
+            </div>
+
+            <!-- Weekly Calendar View -->
+            <div id="weekly-calendar" class="calendar-view">
+                <div class="calendar-header">
+                    <button id="prev-week" class="nav-btn">‹</button>
+                    <h2 id="current-week"></h2>
+                    <button id="next-week" class="nav-btn">›</button>
+                </div>
+                <div id="weekly-grid" class="weekly-grid"></div>
+            </div>
+        </main>
+
+        <!-- Client Profile Modal -->
+        <div id="client-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="client-name"></h2>
+                    <button class="close-btn" id="close-modal">&times;</button>
+                </div>
+                <div id="client-details" class="modal-body"></div>
+                <div class="modal-actions">
+                    <button id="edit-client-btn" class="btn btn-primary">Edit</button>
+                    <button id="delete-client-btn" class="btn btn-danger">Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Form Modal -->
+        <div id="client-form-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="form-title">New Client</h2>
+                    <button class="close-btn" id="close-form-modal">&times;</button>
+                </div>
+                <form id="client-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="parent-name">Parent's Name</label>
+                        <input type="text" id="parent-name" name="parent_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-name">Student's Name *</label>
+                        <input type="text" id="student-name" name="student_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hourly-rate">Hourly Rate</label>
+                        <input type="number" id="hourly-rate" name="hourly_rate" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="lesson-address">Lesson Address</label>
+                        <textarea id="lesson-address" name="lesson_address" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city">
+                    </div>
+                    <div class="form-group">
+                        <label for="favorite-color">Favorite Color</label>
+                        <input type="text" id="favorite-color" name="favorite_color">
+                    </div>
+                    <div class="form-group">
+                        <label for="last-row">Last Row Finished</label>
+                        <input type="text" id="last-row" name="last_row_finished">
+                    </div>
+                    <div class="form-group">
+                        <label for="current-project">Current Project Name</label>
+                        <input type="text" id="current-project" name="current_project_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="lesson-date">Lesson Date</label>
+                        <input type="date" id="lesson-date" name="lesson_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lesson-time">Lesson Time</label>
+                        <input type="time" id="lesson-time" name="lesson_time" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancel-form-btn" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notification Settings Modal -->
+        <div id="notification-settings-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Notification Settings</h2>
+                    <button class="close-btn" id="close-notification-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enable-8am" checked>
+                            <span>8:00 AM on Lesson Day</span>
+                        </label>
+                    </div>
+                    <div class="form-group" id="8am-time-group">
+                        <label for="8am-time">8 AM Time:</label>
+                        <input type="time" id="8am-time" value="08:00">
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enable-1hour" checked>
+                            <span>1 Hour Before Lesson</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enable-30min" checked>
+                            <span>30 Minutes Before Lesson</span>
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="save-notification-settings" class="btn btn-primary">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment Form Modal -->
+        <div id="appointment-form-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="appointment-form-title">Add Appointment</h2>
+                    <button class="close-btn" id="close-appointment-modal">&times;</button>
+                </div>
+                <form id="appointment-form" class="modal-body">
+                    <div class="form-group">
+                        <label for="appointment-date">Date *</label>
+                        <input type="date" id="appointment-date" name="appointment_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appointment-time">Time *</label>
+                        <input type="time" id="appointment-time" name="appointment_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="create-new-client-toggle">
+                            <span>Create New Client</span>
+                        </label>
+                    </div>
+                    <div id="existing-client-group" class="form-group">
+                        <label for="appointment-client-select">Select Client *</label>
+                        <select id="appointment-client-select" name="appointment_client_id" required>
+                            <option value="">-- Select a client --</option>
+                        </select>
+                    </div>
+                    <div id="new-client-fields" style="display: none;">
+                        <div class="form-group">
+                            <label for="appointment-parent-name">Parent's Name</label>
+                            <input type="text" id="appointment-parent-name" name="appointment_parent_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-student-name">Student's Name *</label>
+                            <input type="text" id="appointment-student-name" name="appointment_student_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-hourly-rate">Hourly Rate</label>
+                            <input type="number" id="appointment-hourly-rate" name="appointment_hourly_rate" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-lesson-address">Lesson Address</label>
+                            <textarea id="appointment-lesson-address" name="appointment_lesson_address" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-city">City</label>
+                            <input type="text" id="appointment-city" name="appointment_city">
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-favorite-color">Favorite Color</label>
+                            <input type="text" id="appointment-favorite-color" name="appointment_favorite_color">
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-last-row">Last Row Finished</label>
+                            <input type="text" id="appointment-last-row" name="appointment_last_row_finished">
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-current-project">Current Project Name</label>
+                            <input type="text" id="appointment-current-project" name="appointment_current_project_name">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancel-appointment-btn" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Appointment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Easter Egg Image Overlay -->
+    <div id="easter-egg-overlay" class="easter-egg-overlay">
+        <img src="https://i.pinimg.com/736x/b3/c8/e9/b3c8e96f4092d59469b2a8111e45d18e.jpg" alt="Easter Egg" class="easter-egg-image">
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/calendar.js"></script>
+    <script src="/js/client.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
+
+

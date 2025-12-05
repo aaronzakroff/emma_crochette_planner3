@@ -1,0 +1,312 @@
+/* Monthly Calendar Grid */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    background: var(--soft-blue-light);
+    padding: 10px;
+    border-radius: 12px;
+    border: var(--yarn-border-width) solid var(--soft-blue);
+    box-shadow: 0 4px 8px rgba(184, 212, 227, 0.2);
+}
+
+.weekday-header {
+    text-align: center;
+    padding: 10px;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.calendar-day {
+    background: var(--white);
+    border: 3px solid var(--soft-blue);
+    border-radius: 8px;
+    min-height: 100px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(184, 212, 227, 0.2);
+}
+
+.calendar-day:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(184, 212, 227, 0.3);
+    border-color: var(--soft-blue-dark);
+}
+
+.calendar-day.clickable-day {
+    cursor: pointer;
+    position: relative;
+}
+
+.calendar-day.clickable-day:hover {
+    background: var(--soft-blue-light);
+}
+
+.calendar-day.today {
+    background: var(--soft-pink-light);
+    border-color: var(--soft-pink);
+    border-width: 4px;
+}
+
+.calendar-day.other-month {
+    opacity: 0.4;
+    background: var(--soft-blue-light);
+}
+
+.day-number {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.day-number.today {
+    color: var(--soft-pink-dark);
+    font-weight: 700;
+}
+
+.lessons-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: 80px;
+}
+
+/* Client Card */
+.client-card {
+    background: var(--soft-pink-light);
+    border: 2px solid var(--soft-pink);
+    border-radius: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(244, 209, 220, 0.3);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.client-card:hover {
+    background: var(--soft-pink);
+    transform: scale(1.02);
+    box-shadow: 0 2px 4px rgba(244, 209, 220, 0.4);
+}
+
+.client-card-content {
+    flex: 1;
+    cursor: pointer;
+}
+
+.client-card-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-card-time {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.client-card-city {
+    font-size: 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-card-delete {
+    background: rgba(227, 179, 194, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-left: 4px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.client-card-delete:hover {
+    background: var(--soft-pink-dark);
+    color: var(--white);
+    transform: scale(1.1);
+}
+
+/* Weekly Calendar */
+.weekly-grid {
+    display: flex;
+    flex-direction: column;
+    background: var(--soft-blue-light);
+    border-radius: 12px;
+    border: var(--yarn-border-width) solid var(--soft-blue);
+    box-shadow: 0 4px 8px rgba(184, 212, 227, 0.2);
+    overflow: hidden;
+}
+
+.weekly-header {
+    display: grid;
+    grid-template-columns: 60px repeat(7, 1fr);
+    background: var(--soft-blue);
+    border-bottom: var(--yarn-border-width) solid var(--soft-blue-dark);
+}
+
+.weekly-time-header {
+    padding: 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--white);
+    border-right: 2px solid var(--soft-blue-dark);
+}
+
+.weekly-day-header {
+    padding: 10px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--white);
+    border-right: 2px solid var(--soft-blue-dark);
+}
+
+.weekly-day-header:last-child {
+    border-right: none;
+}
+
+.weekly-time-slot {
+    display: grid;
+    grid-template-columns: 60px repeat(7, 1fr);
+    border-bottom: 1px solid var(--soft-blue);
+    min-height: 60px;
+}
+
+.weekly-time-label {
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: var(--soft-blue-light);
+    border-right: 2px solid var(--soft-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.weekly-day-cell {
+    padding: 4px;
+    border-right: 1px solid var(--soft-blue);
+    background: var(--white);
+    min-height: 60px;
+    position: relative;
+}
+
+.weekly-day-cell:last-child {
+    border-right: none;
+}
+
+.weekly-day-cell.has-lesson {
+    background: var(--soft-pink-light);
+}
+
+.weekly-day-cell.clickable-time-slot {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.weekly-day-cell.clickable-time-slot:hover {
+    background: var(--soft-blue-light);
+    border: 2px dashed var(--soft-blue-dark);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .calendar-grid {
+        gap: 4px;
+        padding: 5px;
+    }
+
+    .calendar-day {
+        min-height: 80px;
+        padding: 4px;
+    }
+
+    .client-card {
+        padding: 4px 6px;
+    }
+
+    .client-card-name {
+        font-size: 11px;
+    }
+
+    .client-card-time,
+    .client-card-city {
+        font-size: 9px;
+    }
+
+    .weekly-header,
+    .weekly-time-slot {
+        grid-template-columns: 50px repeat(7, 1fr);
+    }
+
+    .weekly-time-label {
+        font-size: 10px;
+        padding: 8px 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-day {
+        min-height: 60px;
+    }
+
+    .day-number {
+        font-size: 12px;
+    }
+
+    .lessons-container {
+        max-height: 50px;
+    }
+
+    .client-card-name {
+        font-size: 10px;
+    }
+
+    .weekly-header,
+    .weekly-time-slot {
+        grid-template-columns: 40px repeat(7, 1fr);
+    }
+
+    .weekly-time-label {
+        font-size: 9px;
+        padding: 6px 2px;
+    }
+
+    .weekly-day-header {
+        font-size: 10px;
+        padding: 8px 4px;
+    }
+}
+
+
