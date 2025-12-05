@@ -8,6 +8,10 @@
     border-radius: 12px;
     border: var(--yarn-border-width) solid var(--soft-blue);
     box-shadow: 0 4px 8px rgba(184, 212, 227, 0.2);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 .weekday-header {
@@ -243,13 +247,22 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .calendar-grid {
-        gap: 4px;
-        padding: 5px;
+        gap: 2px;
+        padding: 4px;
+        min-width: 0;
     }
 
     .calendar-day {
         min-height: 80px;
         padding: 4px;
+        min-width: 0;
+        overflow: hidden;
+    }
+    
+    .weekday-header {
+        padding: 6px 2px;
+        font-size: 10px;
+        min-width: 0;
     }
 
     .client-card {
@@ -277,12 +290,20 @@
 }
 
 @media (max-width: 480px) {
+    .calendar-grid {
+        gap: 1px;
+        padding: 2px;
+    }
+    
     .calendar-day {
         min-height: 60px;
+        padding: 2px;
+        min-width: 0;
+        overflow: hidden;
     }
 
     .day-number {
-        font-size: 12px;
+        font-size: 11px;
     }
 
     .lessons-container {
@@ -290,7 +311,12 @@
     }
 
     .client-card-name {
-        font-size: 10px;
+        font-size: 9px;
+    }
+    
+    .weekday-header {
+        padding: 4px 1px;
+        font-size: 9px;
     }
 
     .weekly-header,

@@ -30,6 +30,17 @@ body {
 #app {
     min-height: 100vh;
     padding-bottom: 20px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+}
+
+#calendar-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* Header */
@@ -175,6 +186,10 @@ body {
 .calendar-view {
     display: none;
     padding: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .calendar-view.active {
@@ -510,6 +525,17 @@ body {
 
     .calendar-header h2 {
         font-size: 18px;
+    }
+    
+    .calendar-view {
+        padding: 10px 5px;
+    }
+    
+    #calendar-container {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        box-sizing: border-box;
     }
 }
 
