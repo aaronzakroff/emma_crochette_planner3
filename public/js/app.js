@@ -44,23 +44,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (title && easterEggOverlay) {
         title.style.cursor = 'pointer';
-        title.addEventListener('click', () => {
+        title.addEventListener('click', (e) => {
             // Reset overlay state
             easterEggOverlay.classList.remove('active', 'fade-in', 'fade-out');
             
-            // Prepare audio
+            // Prepare audio with iOS Safari compatibility
             const audio = new Audio('/audio/dark-mystery-intro.mp3');
+            audio.playsInline = true; // Required for iOS Safari
+            audio.preload = 'auto'; // Preload for better performance
             audio.volume = 0.7; // Set volume to 70%
             
             // Show overlay and start fade-in (3 seconds)
             easterEggOverlay.classList.add('active', 'fade-in');
             
-            // Play audio after 1.5 seconds from click
-            setTimeout(() => {
-                audio.play().catch(err => {
-                    console.log('Audio file not found. Please download the sound from https://pixabay.com/sound-effects/dark-mystery-intro-398656/ and save it as public/audio/dark-mystery-intro.mp3');
-                });
-            }, 1500); // Audio starts 1.5s after click
+            // iOS Safari: Must start audio within user gesture context
+            // Play immediately to unlock audio policy, then pause and resume at correct time
+            const playPromise = audio.play().catch(err => {
+                console.log('Audio play failed (iOS policy):', err);
+            });
+            
+            // After unlock, pause and schedule play at 1.5 seconds
+            playPromise.then(() => {
+                // Pause immediately after unlock
+                audio.pause();
+                audio.currentTime = 0;
+                
+                // Play at 1.5 seconds after click
+                setTimeout(() => {
+                    audio.play().catch(err => {
+                        console.log('Audio play failed at 1.5s:', err);
+                    });
+                }, 1500);
+            }).catch(() => {
+                // If initial play failed, try again after a short delay
+                setTimeout(() => {
+                    audio.play().catch(err => {
+                        console.log('Audio play failed after retry:', err);
+                    });
+                }, 100);
+            });
             
             // After fade-in (3s) + visible time (3s) = 6s, start fade-out
             setTimeout(() => {
@@ -75,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     audio.currentTime = 0;
                 }, 3000); // Fade-out duration (3 seconds)
             }, 6000); // Fade-in (3s) + visible (3s) = 6s
-        });
+        }, { passive: false }); // Not passive - we need to prevent default if needed
     }
     
     console.log('App initialized');

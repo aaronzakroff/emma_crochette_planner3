@@ -1,7 +1,7 @@
 /* Monthly Calendar Grid */
 .calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 8px;
     background: var(--soft-blue-light);
     padding: 10px;
@@ -9,10 +9,12 @@
     border: var(--yarn-border-width) solid var(--soft-blue);
     box-shadow: 0 4px 8px rgba(184, 212, 227, 0.2);
     width: 100%;
-    max-width: 100%;
+    max-width: 100vw;
     box-sizing: border-box;
     overflow: hidden;
     min-width: 0;
+    position: relative;
+    contain: layout;
 }
 
 .weekday-header {
@@ -179,9 +181,10 @@
 
 .weekly-header {
     display: grid;
-    grid-template-columns: 60px repeat(7, 1fr);
+    grid-template-columns: 60px repeat(7, minmax(0, 1fr));
     background: var(--soft-blue);
     border-bottom: var(--yarn-border-width) solid var(--soft-blue-dark);
+    min-width: 0;
 }
 
 .weekly-time-header {
@@ -208,9 +211,10 @@
 
 .weekly-time-slot {
     display: grid;
-    grid-template-columns: 60px repeat(7, 1fr);
+    grid-template-columns: 60px repeat(7, minmax(0, 1fr));
     border-bottom: 1px solid var(--soft-blue);
     min-height: 60px;
+    min-width: 0;
 }
 
 .weekly-time-label {
@@ -290,7 +294,8 @@
 
     .weekly-header,
     .weekly-time-slot {
-        grid-template-columns: 50px repeat(7, 1fr);
+        grid-template-columns: 50px repeat(7, minmax(0, 1fr));
+        min-width: 0;
     }
 
     .weekly-time-label {
@@ -306,6 +311,8 @@
         border-width: 2px;
         width: 100%;
         max-width: 100vw;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
     }
     
     .calendar-day {
@@ -314,6 +321,7 @@
         min-width: 0;
         overflow: hidden;
         border-width: 1px;
+        flex-shrink: 0;
     }
 
     .day-number {
@@ -333,11 +341,14 @@
         font-size: 9px;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .weekly-header,
     .weekly-time-slot {
-        grid-template-columns: 40px repeat(7, 1fr);
+        grid-template-columns: 40px repeat(7, minmax(0, 1fr));
+        min-width: 0;
     }
 
     .weekly-time-label {
@@ -348,6 +359,26 @@
     .weekly-day-header {
         font-size: 10px;
         padding: 8px 4px;
+    }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .calendar-grid {
+        -webkit-overflow-scrolling: touch;
+        transform: translateZ(0); /* Force hardware acceleration */
+    }
+    
+    .calendar-day {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* Handle orientation changes */
+@media (orientation: landscape) and (max-width: 768px) {
+    .calendar-grid {
+        max-height: 80vh;
+        overflow-y: auto;
     }
 }
 

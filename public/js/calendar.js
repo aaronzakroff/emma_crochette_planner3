@@ -35,6 +35,29 @@ class Calendar {
             this.currentWeekStart.setDate(this.currentWeekStart.getDate() + 7);
             this.renderWeekly();
         });
+
+        // iOS Safari: Handle resize and orientation changes
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (this.viewMode === 'monthly') {
+                    this.renderMonthly();
+                } else {
+                    this.renderWeekly();
+                }
+            }, 100);
+        }, { passive: true });
+
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (this.viewMode === 'monthly') {
+                    this.renderMonthly();
+                } else {
+                    this.renderWeekly();
+                }
+            }, 200);
+        });
     }
 
     switchView(mode) {
