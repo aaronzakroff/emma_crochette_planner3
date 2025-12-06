@@ -100,62 +100,111 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, { passive: false }); // Not passive - we need to prevent default if needed
     }
     
-    // Fortnite easter egg: Click on Fortnite button (header or bar)
+    // Fortnite easter egg: Separate handlers for header and bar buttons
     const fortniteBtn = document.getElementById('fortnite-btn');
     const fortniteBarBtn = document.getElementById('fortnite-bar-btn');
-    const fortniteOverlay = document.getElementById('fortnite-overlay');
+    const fortniteOverlay = document.getElementById('fortnite-overlay'); // Original overlay for header button
+    const fortniteBarOverlay = document.getElementById('fortnite-bar-overlay'); // New overlay for bar button
     
-    // Function to handle Fortnite easter egg
-    const handleFortniteClick = (e) => {
-            // Reset overlay state
-            fortniteOverlay.classList.remove('active', 'fade-in', 'fade-out');
-            
-            // Prepare audio with iOS Safari compatibility
-            const audio = new Audio('/audio/fortnite-dance.mp3');
-            audio.playsInline = true; // Required for iOS Safari
-            audio.preload = 'auto'; // Preload for better performance
-            audio.volume = 0.7; // Set volume to 70%
-            
-            // Show overlay immediately with fade-in (1 second)
-            fortniteOverlay.classList.add('active', 'fade-in');
-            
-            // iOS Safari: Must start audio within user gesture context
-            // Play immediately to unlock audio policy
-            const playPromise = audio.play().catch(err => {
-                console.log('Fortnite audio play failed (iOS policy):', err);
-            });
-            
-            // After unlock, ensure audio plays
-            playPromise.then(() => {
-                // Audio is playing, keep it going
-                console.log('Fortnite audio playing');
-            }).catch(() => {
-                // If initial play failed, try again after a short delay
-                setTimeout(() => {
-                    audio.play().catch(err => {
-                        console.log('Fortnite audio play failed after retry:', err);
-                    });
-                }, 100);
-            });
-            
-            // After 8 seconds (1s fade-in + 8s visible = 9s), start fade-out
+    // Function to handle Fortnite easter egg (Header Button - Original GIF and Audio)
+    const handleFortniteHeaderClick = (e) => {
+        // Reset overlay state
+        fortniteOverlay.classList.remove('active', 'fade-in', 'fade-out');
+        
+        // Prepare audio with iOS Safari compatibility
+        const audio = new Audio('/audio/fortnite-dance.mp3');
+        audio.playsInline = true; // Required for iOS Safari
+        audio.preload = 'auto'; // Preload for better performance
+        audio.volume = 0.7; // Set volume to 70%
+        
+        // Show overlay immediately with fade-in (1 second)
+        fortniteOverlay.classList.add('active', 'fade-in');
+        
+        // iOS Safari: Must start audio within user gesture context
+        // Play immediately to unlock audio policy
+        const playPromise = audio.play().catch(err => {
+            console.log('Fortnite header audio play failed (iOS policy):', err);
+        });
+        
+        // After unlock, ensure audio plays
+        playPromise.then(() => {
+            // Audio is playing, keep it going
+            console.log('Fortnite header audio playing');
+        }).catch(() => {
+            // If initial play failed, try again after a short delay
             setTimeout(() => {
-                fortniteOverlay.classList.remove('fade-in');
-                fortniteOverlay.classList.add('fade-out');
-                
-                // After fade-out completes (1s), remove overlay and stop audio
-                setTimeout(() => {
-                    fortniteOverlay.classList.remove('active', 'fade-out');
-                    // Stop audio if still playing
-                    audio.pause();
-                    audio.currentTime = 0;
-                }, 1000); // Fade-out duration (1 second)
-            }, 9000); // Fade-in (1s) + visible (8s) = 9s, then fade-out (1s) = 10s total
+                audio.play().catch(err => {
+                    console.log('Fortnite header audio play failed after retry:', err);
+                });
+            }, 100);
+        });
+        
+        // After 8 seconds (1s fade-in + 8s visible = 9s), start fade-out
+        setTimeout(() => {
+            fortniteOverlay.classList.remove('fade-in');
+            fortniteOverlay.classList.add('fade-out');
+            
+            // After fade-out completes (1s), remove overlay and stop audio
+            setTimeout(() => {
+                fortniteOverlay.classList.remove('active', 'fade-out');
+                // Stop audio if still playing
+                audio.pause();
+                audio.currentTime = 0;
+            }, 1000); // Fade-out duration (1 second)
+        }, 9000); // Fade-in (1s) + visible (8s) = 9s, then fade-out (1s) = 10s total
     };
     
-    // Attach event listeners to both buttons
+    // Function to handle Fortnite easter egg (Bar Button - New GIF and Audio)
+    const handleFortniteBarClick = (e) => {
+        // Reset overlay state
+        fortniteBarOverlay.classList.remove('active', 'fade-in', 'fade-out');
+        
+        // Prepare audio with iOS Safari compatibility (new default dance audio)
+        const audio = new Audio('/audio/fortnite-default-dance.mp3');
+        audio.playsInline = true; // Required for iOS Safari
+        audio.preload = 'auto'; // Preload for better performance
+        audio.volume = 0.7; // Set volume to 70%
+        
+        // Show overlay immediately with fade-in (1 second)
+        fortniteBarOverlay.classList.add('active', 'fade-in');
+        
+        // iOS Safari: Must start audio within user gesture context
+        // Play immediately to unlock audio policy
+        const playPromise = audio.play().catch(err => {
+            console.log('Fortnite bar audio play failed (iOS policy):', err);
+        });
+        
+        // After unlock, ensure audio plays
+        playPromise.then(() => {
+            // Audio is playing, keep it going
+            console.log('Fortnite bar audio playing');
+        }).catch(() => {
+            // If initial play failed, try again after a short delay
+            setTimeout(() => {
+                audio.play().catch(err => {
+                    console.log('Fortnite bar audio play failed after retry:', err);
+                });
+            }, 100);
+        });
+        
+        // After 8 seconds (1s fade-in + 8s visible = 9s), start fade-out
+        setTimeout(() => {
+            fortniteBarOverlay.classList.remove('fade-in');
+            fortniteBarOverlay.classList.add('fade-out');
+            
+            // After fade-out completes (1s), remove overlay and stop audio
+            setTimeout(() => {
+                fortniteBarOverlay.classList.remove('active', 'fade-out');
+                // Stop audio if still playing
+                audio.pause();
+                audio.currentTime = 0;
+            }, 1000); // Fade-out duration (1 second)
+        }, 9000); // Fade-in (1s) + visible (8s) = 9s, then fade-out (1s) = 10s total
+    };
+    
+    // Attach event listeners to header button (original)
     if (fortniteBtn && fortniteOverlay) {
-        fortniteBtn.addEventListener('click', handleFortniteClick, { passive: false });
+        fortniteBtn.addEventListener('click', handleFortniteHeaderClick, { passive: false });
         console.log('Fortnite header button found and listener attached');
         // Make button visible
         fortniteBtn.style.display = 'flex';
@@ -165,8 +214,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('Fortnite header button or overlay not found:', { fortniteBtn: !!fortniteBtn, fortniteOverlay: !!fortniteOverlay });
     }
     
-    if (fortniteBarBtn && fortniteOverlay) {
-        fortniteBarBtn.addEventListener('click', handleFortniteClick, { passive: false });
+    // Attach event listeners to bar button (new GIF and audio)
+    if (fortniteBarBtn && fortniteBarOverlay) {
+        fortniteBarBtn.addEventListener('click', handleFortniteBarClick, { passive: false });
         console.log('Fortnite bar button found and listener attached');
         // Make button visible
         fortniteBarBtn.style.display = 'flex';
@@ -177,7 +227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             fortniteBarBtn.parentElement.style.visibility = 'visible';
         }
     } else {
-        console.warn('Fortnite bar button or overlay not found:', { fortniteBarBtn: !!fortniteBarBtn, fortniteOverlay: !!fortniteOverlay });
+        console.warn('Fortnite bar button or overlay not found:', { fortniteBarBtn: !!fortniteBarBtn, fortniteBarOverlay: !!fortniteBarOverlay });
     }
     
     console.log('App initialized');

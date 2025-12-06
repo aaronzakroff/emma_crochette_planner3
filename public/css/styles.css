@@ -221,8 +221,8 @@ body {
     width: 100%;
     max-width: 600px;
     padding: 10px 16px;
-    background: rgba(244, 209, 220, 0.3);
-    border: 1px solid var(--soft-pink);
+    background: rgba(255, 229, 236, 0.08) !important; /* Very subtle pink - almost invisible */
+    border: 1px solid rgba(244, 209, 220, 0.15) !important; /* Very light pink border */
     border-radius: 8px;
     display: flex !important;
     align-items: center;
@@ -230,26 +230,28 @@ body {
     gap: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(227, 179, 194, 0.15);
-    color: var(--soft-pink-dark) !important;
+    box-shadow: none !important; /* No shadow for subtlety */
+    color: rgba(227, 179, 194, 0.25) !important; /* Very light pink text - hard to see */
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 400; /* Lighter weight */
     text-transform: none;
     letter-spacing: 0.5px;
     visibility: visible !important;
-    opacity: 1 !important;
+    opacity: 0.3 !important; /* Very low overall opacity */
 }
 
 .fortnite-bar-btn:hover {
-    background: rgba(244, 209, 220, 0.5);
+    background: rgba(255, 229, 236, 0.15) !important; /* Slightly more visible on hover */
     transform: translateY(-1px);
-    box-shadow: 0 3px 6px rgba(227, 179, 194, 0.25);
-    border-color: var(--soft-pink-dark);
+    box-shadow: 0 1px 2px rgba(227, 179, 194, 0.1) !important; /* Minimal shadow on hover */
+    border-color: rgba(244, 209, 220, 0.25) !important;
+    opacity: 0.5 !important; /* Slightly more visible on hover */
 }
 
 .fortnite-bar-btn:active {
     transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(227, 179, 194, 0.2);
+    box-shadow: none !important;
+    opacity: 0.4 !important;
 }
 
 .fortnite-logo {
@@ -259,23 +261,24 @@ body {
     border-radius: 4px;
     display: block !important;
     visibility: visible !important;
-    opacity: 0.7;
+    opacity: 0.2 !important; /* Very low opacity - hard to see */
     transition: opacity 0.3s ease;
 }
 
 .fortnite-bar-btn:hover .fortnite-logo {
-    opacity: 1;
+    opacity: 0.35 !important; /* Slightly more visible on hover */
 }
 
 .fortnite-text {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    color: var(--soft-pink-dark);
-    opacity: 0.8;
+    color: rgba(227, 179, 194, 0.25) !important; /* Very light pink - hard to see */
+    opacity: 0.3 !important; /* Additional opacity reduction */
     transition: opacity 0.3s ease;
 }
 
 .fortnite-bar-btn:hover .fortnite-text {
-    opacity: 1;
+    opacity: 0.5 !important; /* Slightly more visible on hover */
+    color: rgba(227, 179, 194, 0.4) !important;
 }
 
 @media (max-width: 480px) {
@@ -288,11 +291,29 @@ body {
         padding: 8px 12px;
         font-size: 12px;
         gap: 6px;
+        opacity: 0.25 !important; /* Even more subtle on mobile */
+    }
+    
+    .fortnite-bar-btn:hover {
+        opacity: 0.4 !important;
     }
     
     .fortnite-logo {
         width: 20px !important;
         height: 20px !important;
+        opacity: 0.15 !important; /* Even more subtle on mobile */
+    }
+    
+    .fortnite-bar-btn:hover .fortnite-logo {
+        opacity: 0.3 !important;
+    }
+    
+    .fortnite-text {
+        opacity: 0.25 !important; /* Even more subtle on mobile */
+    }
+    
+    .fortnite-bar-btn:hover .fortnite-text {
+        opacity: 0.4 !important;
     }
 }
 
