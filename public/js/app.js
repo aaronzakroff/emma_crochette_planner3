@@ -154,13 +154,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 9000); // Fade-in (1s) + visible (8s) = 9s, then fade-out (1s) = 10s total
     };
     
-    // Function to handle Fortnite easter egg (Bar Button - New GIF and Audio)
+    // Function to handle Fortnite easter egg (Bar Button - New GIF and Among Us Audio)
     const handleFortniteBarClick = (e) => {
         // Reset overlay state
         fortniteBarOverlay.classList.remove('active', 'fade-in', 'fade-out');
         
-        // Prepare audio with iOS Safari compatibility (new default dance audio)
-        const audio = new Audio('/audio/fortnite-default-dance.mp3');
+        // Prepare audio with iOS Safari compatibility (Among Us audio)
+        const audio = new Audio('/audio/amongus.mp3');
         audio.playsInline = true; // Required for iOS Safari
         audio.preload = 'auto'; // Preload for better performance
         audio.volume = 0.7; // Set volume to 70%
@@ -171,18 +171,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         // iOS Safari: Must start audio within user gesture context
         // Play immediately to unlock audio policy
         const playPromise = audio.play().catch(err => {
-            console.log('Fortnite bar audio play failed (iOS policy):', err);
+            console.log('Among Us bar audio play failed (iOS policy):', err);
         });
         
         // After unlock, ensure audio plays
         playPromise.then(() => {
             // Audio is playing, keep it going
-            console.log('Fortnite bar audio playing');
+            console.log('Among Us bar audio playing');
         }).catch(() => {
             // If initial play failed, try again after a short delay
             setTimeout(() => {
                 audio.play().catch(err => {
-                    console.log('Fortnite bar audio play failed after retry:', err);
+                    console.log('Among Us bar audio play failed after retry:', err);
                 });
             }, 100);
         });
