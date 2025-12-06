@@ -156,16 +156,115 @@ class ClientManager {
                     deleteBtn.addEventListener('click', async (e) => {
                         e.stopPropagation();
                         if (confirm(`Delete appointment on ${dateStr} at ${timeStr}?`)) {
+                            console.log('Deleting appointment:', lesson.id, 'for client:', clientId);
+                            
+                            // Validate lesson ID
+                            if (!lesson.id) {
+                                console.error('Invalid lesson ID:', lesson);
+                                alert('Invalid appointment ID. Please refresh the page and try again.');
+                                return;
+                            }
+                            
                             try {
-                                await API.deleteLesson(lesson.id);
-                                // Refresh client profile to update lessons list
-                                await this.showClientProfile(clientId);
-                                // Refresh calendar
-                                await window.calendar.loadLessons();
-                                await window.calendar.render();
+                                // First, verify the lesson exists before attempting to delete
+                                let lessonExists = false;
+                                try {
+                                    const verifyLesson = await API.getLesson(lesson.id);
+                                    lessonExists = !!verifyLesson;
+                                    console.log('Lesson exists:', lessonExists);
+                                } catch (verifyError) {
+                                    // Lesson doesn't exist - might have been deleted already
+                                    console.log('Lesson not found during verification:', verifyError.message);
+                                    lessonExists = false;
+                                }
+                                
+                                if (!lessonExists) {
+                                    // Lesson doesn't exist - might have been deleted already
+                                    console.log('Lesson does not exist, refreshing UI anyway');
+                                    // Refresh UI to remove stale data
+                                    await this.showClientProfile(clientId).catch(() => {});
+                                    await window.calendar.loadLessons().catch(() => {});
+                                    await window.calendar.render().catch(() => {});
+                                    // Don't show error - just refresh silently
+                                    return;
+                                }
+                                
+                                // Delete the lesson
+                                const deleteResult = await API.deleteLesson(lesson.id);
+                                console.log('Delete success:', deleteResult);
+                                
+                                // Wait a brief moment for server to commit
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                                
+                                // Refresh client profile with retry logic
+                                let profileLoaded = false;
+                                let retries = 3;
+                                while (!profileLoaded && retries > 0) {
+                                    try {
+                                        await this.showClientProfile(clientId);
+                                        profileLoaded = true;
+                                        console.log('Client profile refreshed after delete');
+                                    } catch (error) {
+                                        retries--;
+                                        console.error(`Failed to refresh profile (${3 - retries}/3):`, error);
+                                        if (retries > 0) {
+                                            await new Promise(resolve => setTimeout(resolve, 500));
+                                        } else {
+                                            // Last attempt failed - show error but don't block
+                                            console.error('Failed to refresh client profile after delete');
+                                            alert('Appointment deleted, but failed to refresh client data. Please refresh the page.');
+                                        }
+                                    }
+                                }
+                                
+                                // Refresh calendar with retry logic
+                                let calendarLoaded = false;
+                                retries = 3;
+                                while (!calendarLoaded && retries > 0) {
+                                    try {
+                                        await window.calendar.loadLessons();
+                                        await window.calendar.render();
+                                        calendarLoaded = true;
+                                        console.log('Calendar refreshed after delete');
+                                    } catch (error) {
+                                        retries--;
+                                        console.error(`Failed to refresh calendar (${3 - retries}/3):`, error);
+                                        if (retries > 0) {
+                                            await new Promise(resolve => setTimeout(resolve, 500));
+                                        } else {
+                                            console.error('Failed to refresh calendar after delete');
+                                            // Don't show alert - calendar will refresh on next interaction
+                                        }
+                                    }
+                                }
                             } catch (error) {
                                 console.error('Error deleting lesson:', error);
-                                alert('Failed to delete appointment: ' + error.message);
+                                
+                                // Handle "Lesson not found" error gracefully
+                                if (error.message && error.message.includes('not found')) {
+                                    console.log('Lesson already deleted or not found, refreshing UI');
+                                    // Lesson might have been deleted already - just refresh UI
+                                    try {
+                                        await this.showClientProfile(clientId).catch(() => {});
+                                        await window.calendar.loadLessons().catch(() => {});
+                                        await window.calendar.render().catch(() => {});
+                                    } catch (reloadError) {
+                                        console.error('Failed to reload after delete error:', reloadError);
+                                    }
+                                    // Don't show error alert for "not found" - just refresh silently
+                                } else {
+                                    // Other errors - show alert
+                                    alert('Failed to delete appointment: ' + (error.message || 'Unknown error. Please try again.'));
+                                    
+                                    // Try to reload data anyway to avoid stale UI
+                                    try {
+                                        await this.showClientProfile(clientId).catch(() => {});
+                                        await window.calendar.loadLessons().catch(() => {});
+                                        await window.calendar.render().catch(() => {});
+                                    } catch (reloadError) {
+                                        console.error('Failed to reload after delete error:', reloadError);
+                                    }
+                                }
                             }
                         }
                     });
@@ -216,9 +315,9 @@ class ClientManager {
                     document.getElementById('lesson-date').value = this.formatDateForInput(lessonDate);
                     document.getElementById('lesson-time').value = this.formatTimeForInput(lessonTime);
                 } else {
-                    const today = new Date();
-                    document.getElementById('lesson-date').value = this.formatDateForInput(today);
-                    document.getElementById('lesson-time').value = '14:00';
+                    // Clear date and time for existing clients without lessons
+                    document.getElementById('lesson-date').value = '';
+                    document.getElementById('lesson-time').value = '';
                 }
             } catch (error) {
                 console.error('Error loading client for edit:', error);
@@ -228,9 +327,9 @@ class ClientManager {
         } else {
             title.textContent = 'New Client';
             form.reset();
-            const today = new Date();
-            document.getElementById('lesson-date').value = this.formatDateForInput(today);
-            document.getElementById('lesson-time').value = '14:00';
+            // Don't pre-fill date/time - they're optional
+            document.getElementById('lesson-date').value = '';
+            document.getElementById('lesson-time').value = '';
         }
         
         document.getElementById('client-form-modal').classList.add('active');
@@ -240,6 +339,11 @@ class ClientManager {
         document.getElementById('client-form-modal').classList.remove('active');
         this.editingClientId = null;
         document.getElementById('client-form').reset();
+        // Explicitly clear date/time fields to prevent any residual values
+        const lessonDateInput = document.getElementById('lesson-date');
+        const lessonTimeInput = document.getElementById('lesson-time');
+        if (lessonDateInput) lessonDateInput.value = '';
+        if (lessonTimeInput) lessonTimeInput.value = '';
     }
 
     async saveClient() {
@@ -257,52 +361,189 @@ class ClientManager {
             current_project_name: formData.get('current_project_name') || null
         };
         
-        const lessonData = {
-            date: formData.get('lesson_date'),
-            time: formData.get('lesson_time')
-        };
+        // Get values directly from input elements to avoid FormData issues
+        const lessonDateInput = document.getElementById('lesson-date');
+        const lessonTimeInput = document.getElementById('lesson-time');
+        const lessonDate = lessonDateInput ? (lessonDateInput.value || '').trim() : '';
+        const lessonTime = lessonTimeInput ? (lessonTimeInput.value || '').trim() : '';
+        
+        // Only create lesson if both date and time are provided and not empty
+        // More robust validation: check for empty strings, null, undefined, and invalid date/time formats
+        const hasValidDate = lessonDate && lessonDate.length > 0 && lessonDate.match(/^\d{4}-\d{2}-\d{2}$/);
+        const hasValidTime = lessonTime && lessonTime.length > 0 && lessonTime.match(/^\d{2}:\d{2}$/);
+        const hasLessonData = hasValidDate && hasValidTime;
+        
+        console.log('Lesson data check:', { 
+            lessonDate, 
+            lessonTime, 
+            lessonDateLength: lessonDate.length,
+            lessonTimeLength: lessonTime.length,
+            hasValidDate,
+            hasValidTime,
+            hasLessonData 
+        });
+        
+        // Additional safety check: if hasLessonData is false, ensure we don't create a lesson
+        if (!hasLessonData && (lessonDate || lessonTime)) {
+            console.warn('Invalid lesson data detected - date or time is malformed:', { lessonDate, lessonTime });
+        }
         
         if (!clientData.student_name) {
             alert('Student name is required');
             return;
         }
         
+        console.log('Saving client:', { editing: !!this.editingClientId, clientData, hasLessonData });
+        
         try {
-            let client;
-            if (this.editingClientId) {
-                client = await API.updateClient(this.editingClientId, clientData);
-                // Update lesson if exists
-                const allLessons = await API.getLessons();
-                const existingLesson = allLessons.find(l => l.client_id === this.editingClientId);
-                if (existingLesson) {
-                    await API.updateLesson(existingLesson.id, {
-                        client_id: this.editingClientId,
-                        ...lessonData
-                    });
+            let savedClient;
+            const wasEditing = !!this.editingClientId;
+            const clientIdToUse = this.editingClientId;
+            
+            if (wasEditing) {
+                console.log('Updating existing client:', clientIdToUse);
+                savedClient = await API.updateClient(clientIdToUse, clientData);
+                console.log('Client updated:', savedClient);
+                
+                if (!savedClient || !savedClient.id) {
+                    throw new Error('Client was updated but no ID was returned');
+                }
+                
+                // Only update or create lesson if date and time are provided
+                if (hasLessonData) {
+                    try {
+                        const allLessons = await API.getLessons();
+                        const existingLesson = allLessons.find(l => l.client_id === clientIdToUse);
+                        if (existingLesson) {
+                            console.log('Updating existing lesson:', existingLesson.id);
+                            await API.updateLesson(existingLesson.id, {
+                                client_id: clientIdToUse,
+                                date: lessonDate,
+                                time: lessonTime
+                            });
+                        } else {
+                            console.log('Creating new lesson for existing client');
+                            await API.createLesson({
+                                client_id: clientIdToUse,
+                                date: lessonDate,
+                                time: lessonTime
+                            });
+                        }
+                    } catch (lessonError) {
+                        console.error('Error saving lesson:', lessonError);
+                        // Don't fail the whole save if lesson fails
+                        alert('Client saved, but lesson update failed: ' + lessonError.message);
+                    }
                 } else {
-                    await API.createLesson({
-                        client_id: this.editingClientId,
-                        ...lessonData
-                    });
+                    console.log('No lesson data provided - skipping lesson creation/update');
                 }
             } else {
-                client = await API.createClient(clientData);
-                await API.createLesson({
-                    client_id: client.id,
-                    ...lessonData
-                });
+                console.log('Creating new client');
+                savedClient = await API.createClient(clientData);
+                console.log('Client created:', savedClient);
+                
+                if (!savedClient || !savedClient.id) {
+                    throw new Error('Client was created but no ID was returned');
+                }
+                
+                // Only create lesson if date and time are provided
+                if (hasLessonData) {
+                    try {
+                        console.log('Creating lesson for new client');
+                        await API.createLesson({
+                            client_id: savedClient.id,
+                            date: lessonDate,
+                            time: lessonTime
+                        });
+                    } catch (lessonError) {
+                        console.error('Error creating lesson:', lessonError);
+                        // Don't fail the whole save if lesson fails
+                        alert('Client saved, but lesson creation failed: ' + lessonError.message);
+                    }
+                } else {
+                    console.log('No lesson data provided - client created without appointment');
+                }
             }
             
-            this.hideClientForm();
-            await window.calendar.loadLessons();
-            await window.calendar.render();
+            // Wait for server to commit
+            await new Promise(resolve => setTimeout(resolve, 200));
             
-            if (this.currentClient && this.currentClient.id === client.id) {
-                await this.showClientProfile(client.id);
+            // Close form first
+            this.hideClientForm();
+            
+            // Only refresh calendar if a lesson was created/updated
+            if (hasLessonData) {
+                // Refresh calendar with retry logic
+                let calendarRefreshed = false;
+                let retries = 3;
+                while (!calendarRefreshed && retries > 0) {
+                    try {
+                        await window.calendar.loadLessons();
+                        await window.calendar.render();
+                        calendarRefreshed = true;
+                        console.log('Calendar refreshed after client save (lesson was created/updated)');
+                    } catch (error) {
+                        retries--;
+                        console.error(`Failed to refresh calendar (${3 - retries}/3):`, error);
+                        if (retries > 0) {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        } else {
+                            console.error('Failed to refresh calendar after client save');
+                            alert('Client saved, but calendar may not be updated. Please refresh the page.');
+                        }
+                    }
+                }
+            } else {
+                console.log('No calendar refresh needed - no lesson was created/updated');
+            }
+            
+            // Refresh client profile if viewing this client
+            if (this.currentClient && this.currentClient.id === savedClient.id) {
+                let profileRefreshed = false;
+                retries = 3;
+                while (!profileRefreshed && retries > 0) {
+                    try {
+                        await this.showClientProfile(savedClient.id);
+                        profileRefreshed = true;
+                        console.log('Client profile refreshed after save');
+                    } catch (error) {
+                        retries--;
+                        console.error(`Failed to refresh profile (${3 - retries}/3):`, error);
+                        if (retries > 0) {
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        } else {
+                            console.error('Failed to refresh client profile after save');
+                            // Don't show alert - profile will refresh on next view
+                        }
+                    }
+                }
+            }
+            
+            // Verify client appears in system (for new clients)
+            if (!wasEditing && savedClient) {
+                const verifyRetries = 2;
+                for (let i = 0; i < verifyRetries; i++) {
+                    try {
+                        const clients = await API.getClients();
+                        const found = clients.some(c => c.id === savedClient.id);
+                        if (found) {
+                            console.log('Client verified in system');
+                            break;
+                        } else if (i < verifyRetries - 1) {
+                            console.log('Client not found, retrying...');
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                        }
+                    } catch (verifyError) {
+                        console.error('Error verifying client:', verifyError);
+                    }
+                }
             }
         } catch (error) {
             console.error('Error saving client:', error);
-            alert('Failed to save client: ' + error.message);
+            alert('Failed to save client: ' + (error.message || 'Unknown error. Please try again.'));
+            
+            // Don't close form on error - let user try again
+            // Form stays open so user can correct and retry
         }
     }
 
@@ -437,8 +678,11 @@ class ClientManager {
             return;
         }
         
+        console.log('Saving appointment:', { date, time, createNew });
+        
         try {
             let clientId;
+            let savedClient = null;
             
             if (createNew) {
                 // Create new client
@@ -459,8 +703,14 @@ class ClientManager {
                     current_project_name: formData.get('appointment_current_project_name') || null
                 };
                 
-                const client = await API.createClient(clientData);
-                clientId = client.id;
+                console.log('Creating new client:', clientData);
+                savedClient = await API.createClient(clientData);
+                console.log('Client created:', savedClient);
+                
+                if (!savedClient || !savedClient.id) {
+                    throw new Error('Client was created but no ID was returned');
+                }
+                clientId = savedClient.id;
             } else {
                 // Use existing client
                 clientId = formData.get('appointment_client_id');
@@ -470,20 +720,75 @@ class ClientManager {
                 }
             }
             
-            // Create lesson/appointment
-            await API.createLesson({
+            // Create lesson/appointment - wait for server confirmation
+            console.log('Creating lesson for client:', clientId);
+            const lessonData = {
                 client_id: clientId,
                 date: date,
                 time: time
-            });
+            };
             
-            // Refresh calendar and close modal
+            const savedLesson = await API.createLesson(lessonData);
+            console.log('Lesson created:', savedLesson);
+            
+            if (!savedLesson || !savedLesson.id) {
+                throw new Error('Lesson was created but no ID was returned');
+            }
+            
+            // Wait a brief moment for server to commit
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Close modal first to prevent user from clicking again
             this.hideAppointmentForm();
-            await window.calendar.loadLessons();
-            await window.calendar.render();
+            
+            // Refresh calendar with retry logic - ensure we get fresh data
+            let calendarRefreshed = false;
+            let retries = 3;
+            while (!calendarRefreshed && retries > 0) {
+                try {
+                    await window.calendar.loadLessons();
+                    await window.calendar.render();
+                    calendarRefreshed = true;
+                    console.log('Calendar refreshed after save');
+                } catch (error) {
+                    retries--;
+                    console.error(`Failed to refresh calendar (${3 - retries}/3):`, error);
+                    if (retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } else {
+                        console.error('Failed to refresh calendar after save');
+                        alert('Appointment saved, but calendar may not be updated. Please refresh the page.');
+                    }
+                }
+            }
+            
+            // Verify the appointment appears in the calendar
+            if (calendarRefreshed) {
+                const verifyRetries = 2;
+                for (let i = 0; i < verifyRetries; i++) {
+                    const lessons = await API.getLessonsByRange(date, date);
+                    const found = lessons.some(l => 
+                        l.client_id === clientId && 
+                        l.date === date && 
+                        l.time === time
+                    );
+                    if (found) {
+                        console.log('Appointment verified in calendar');
+                        break;
+                    } else if (i < verifyRetries - 1) {
+                        console.log('Appointment not found, retrying...');
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        await window.calendar.loadLessons();
+                        await window.calendar.render();
+                    }
+                }
+            }
         } catch (error) {
             console.error('Error saving appointment:', error);
-            alert('Failed to save appointment: ' + error.message);
+            alert('Failed to save appointment: ' + (error.message || 'Unknown error. Please try again.'));
+            
+            // Don't close modal on error - let user try again
+            // Modal stays open so user can correct and retry
         }
     }
 }

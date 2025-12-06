@@ -324,13 +324,91 @@ class Calendar {
         deleteBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (confirm(`Delete appointment for ${lesson.client.student_name} on ${new Date(lesson.date).toLocaleDateString()}?`)) {
+                console.log('Deleting appointment from calendar:', lesson.id);
+                
+                // Validate lesson ID
+                if (!lesson.id) {
+                    console.error('Invalid lesson ID:', lesson);
+                    alert('Invalid appointment ID. Please refresh the page and try again.');
+                    return;
+                }
+                
                 try {
-                    await API.deleteLesson(lesson.id);
-                    await window.calendar.loadLessons();
-                    await window.calendar.render();
+                    // First, verify the lesson exists before attempting to delete
+                    let lessonExists = false;
+                    try {
+                        const verifyLesson = await API.getLesson(lesson.id);
+                        lessonExists = !!verifyLesson;
+                        console.log('Lesson exists:', lessonExists);
+                    } catch (verifyError) {
+                        // Lesson doesn't exist - might have been deleted already
+                        console.log('Lesson not found during verification:', verifyError.message);
+                        lessonExists = false;
+                    }
+                    
+                    if (!lessonExists) {
+                        // Lesson doesn't exist - might have been deleted already
+                        console.log('Lesson does not exist, refreshing calendar anyway');
+                        // Refresh calendar to remove stale data
+                        await window.calendar.loadLessons().catch(() => {});
+                        await window.calendar.render().catch(() => {});
+                        // Don't show error - just refresh silently
+                        return;
+                    }
+                    
+                    // Delete the lesson
+                    const deleteResult = await API.deleteLesson(lesson.id);
+                    console.log('Delete success:', deleteResult);
+                    
+                    // Wait a brief moment for server to commit
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    // Refresh calendar with retry logic
+                    let calendarRefreshed = false;
+                    let retries = 3;
+                    while (!calendarRefreshed && retries > 0) {
+                        try {
+                            await window.calendar.loadLessons();
+                            await window.calendar.render();
+                            calendarRefreshed = true;
+                            console.log('Calendar refreshed after delete');
+                        } catch (error) {
+                            retries--;
+                            console.error(`Failed to refresh calendar (${3 - retries}/3):`, error);
+                            if (retries > 0) {
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                            } else {
+                                console.error('Failed to refresh calendar after delete');
+                                alert('Appointment deleted, but calendar may not be updated. Please refresh the page.');
+                            }
+                        }
+                    }
                 } catch (error) {
                     console.error('Error deleting lesson:', error);
-                    alert('Failed to delete appointment: ' + error.message);
+                    
+                    // Handle "Lesson not found" error gracefully
+                    if (error.message && error.message.includes('not found')) {
+                        console.log('Lesson already deleted or not found, refreshing calendar');
+                        // Lesson might have been deleted already - just refresh calendar
+                        try {
+                            await window.calendar.loadLessons().catch(() => {});
+                            await window.calendar.render().catch(() => {});
+                        } catch (reloadError) {
+                            console.error('Failed to reload after delete error:', reloadError);
+                        }
+                        // Don't show error alert for "not found" - just refresh silently
+                    } else {
+                        // Other errors - show alert
+                        alert('Failed to delete appointment: ' + (error.message || 'Unknown error. Please try again.'));
+                        
+                        // Try to reload data anyway to avoid stale UI
+                        try {
+                            await window.calendar.loadLessons().catch(() => {});
+                            await window.calendar.render().catch(() => {});
+                        } catch (reloadError) {
+                            console.error('Failed to reload after delete error:', reloadError);
+                        }
+                    }
                 }
             }
         });

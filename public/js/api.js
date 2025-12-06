@@ -1,7 +1,7 @@
 const API_BASE_URL = window.location.origin;
 
 class API {
-    static async request(endpoint, options = {}) {
+    static async request(endpoint, options = {}, retries = 2) {
         const url = `${API_BASE_URL}/api${endpoint}`;
         const config = {
             headers: {
@@ -15,19 +15,50 @@ class API {
             config.body = JSON.stringify(config.body);
         }
 
-        try {
-            const response = await fetch(url, config);
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Request failed');
+        let lastError;
+        
+        // Retry logic for network failures
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                console.log(`API Request [${attempt + 1}/${retries + 1}]:`, endpoint, options.method || 'GET');
+                
+                const response = await fetch(url, config);
+                
+                // Handle non-JSON responses
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    const text = await response.text();
+                    data = text ? JSON.parse(text) : {};
+                }
+                
+                if (!response.ok) {
+                    const errorMsg = data.error || data.message || `Request failed: ${response.status} ${response.statusText}`;
+                    console.error(`API Error [${response.status}]:`, errorMsg);
+                    throw new Error(errorMsg);
+                }
+                
+                console.log(`API Success:`, endpoint, data);
+                return data;
+            } catch (error) {
+                lastError = error;
+                console.error(`API Error [attempt ${attempt + 1}]:`, error);
+                
+                // Don't retry on client errors (4xx) or if no retries left
+                if (error.message.includes('400') || error.message.includes('401') || 
+                    error.message.includes('403') || error.message.includes('404') || 
+                    attempt >= retries) {
+                    throw error;
+                }
+                
+                // Wait before retry (exponential backoff)
+                await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 100));
             }
-            
-            return data;
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
         }
+        
+        throw lastError;
     }
 
     // Client endpoints

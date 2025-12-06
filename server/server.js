@@ -18,6 +18,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static files from public directory with proper headers for PWA
 app.use(express.static(path.join(__dirname, '../public'), {
     setHeaders: (res, filePath) => {
+        // Prevent caching of JavaScript files in development
+        if (filePath.endsWith('.js')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
         // Set proper content type for service worker
         if (filePath.endsWith('service-worker.js')) {
             res.setHeader('Content-Type', 'application/javascript');

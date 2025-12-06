@@ -33,6 +33,12 @@
                         <line x1="8" y1="12" x2="16" y2="12"></line>
                     </svg>
                 </button>
+                <button id="fortnite-btn" class="icon-btn fortnite-btn" aria-label="Fortnite">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
+                        <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="currentColor"/>
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -64,6 +70,14 @@
                 <div id="weekly-grid" class="weekly-grid"></div>
             </div>
         </main>
+
+        <!-- Fortnite Easter Egg Button -->
+        <div class="fortnite-bar-container">
+            <button id="fortnite-bar-btn" class="fortnite-bar-btn" aria-label="Fortnite">
+                <img src="https://i.pinimg.com/originals/a9/c2/d0/a9c2d0dcf02d518a6a640c08e43f602a.gif" alt="Fortnite Logo" class="fortnite-logo">
+                <span class="fortnite-text">Fortnite</span>
+            </button>
+        </div>
 
         <!-- Client Profile Modal -->
         <div id="client-modal" class="modal">
@@ -121,12 +135,13 @@
                         <input type="text" id="current-project" name="current_project_name">
                     </div>
                     <div class="form-group">
-                        <label for="lesson-date">Lesson Date</label>
-                        <input type="date" id="lesson-date" name="lesson_date" required>
+                        <label for="lesson-date">Lesson Date (Optional)</label>
+                        <input type="date" id="lesson-date" name="lesson_date">
+                        <small class="form-hint">You can add appointments later by clicking on calendar days</small>
                     </div>
                     <div class="form-group">
-                        <label for="lesson-time">Lesson Time</label>
-                        <input type="time" id="lesson-time" name="lesson_time" required>
+                        <label for="lesson-time">Lesson Time (Optional)</label>
+                        <input type="time" id="lesson-time" name="lesson_time">
                     </div>
                     <div class="form-actions">
                         <button type="button" id="cancel-form-btn" class="btn btn-secondary">Cancel</button>
@@ -247,6 +262,11 @@
     <!-- Easter Egg Image Overlay -->
     <div id="easter-egg-overlay" class="easter-egg-overlay">
         <img src="https://i.pinimg.com/736x/b3/c8/e9/b3c8e96f4092d59469b2a8111e45d18e.jpg" alt="Easter Egg" class="easter-egg-image">
+    </div>
+
+    <!-- Fortnite Easter Egg Overlay -->
+    <div id="fortnite-overlay" class="easter-egg-overlay">
+        <img src="https://i.pinimg.com/originals/a9/c2/d0/a9c2d0dcf02d518a6a640c08e43f602a.gif" alt="Fortnite Dance" class="easter-egg-image">
     </div>
 
     <script src="/js/api.js"></script>
