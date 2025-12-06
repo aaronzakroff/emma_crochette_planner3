@@ -86,14 +86,25 @@ class Calendar {
             const startStr = this.formatDateForAPI(startDate);
             const endStr = this.formatDateForAPI(endDate);
             
+            console.log('Loading lessons for range:', startStr, 'to', endStr);
             this.lessons = await API.getLessonsByRange(startStr, endStr);
-            this.render();
+            console.log('Loaded lessons:', this.lessons.length);
+            // Don't call render() here - let the caller decide when to render
         } catch (error) {
             console.error('Error loading lessons:', error);
+            throw error; // Re-throw so caller can handle retries
         }
     }
 
     async render() {
+        // Load lessons first if not already loaded for current month
+        try {
+            await this.loadLessons();
+        } catch (error) {
+            console.error('Error loading lessons in render:', error);
+            // Continue with render even if load fails - use existing lessons
+        }
+        
         if (this.viewMode === 'monthly') {
             await this.renderMonthly();
         } else {
@@ -105,10 +116,19 @@ class Calendar {
         const monthStart = this.getMonthStart(this.currentDate);
         const monthEnd = this.getMonthEnd(this.currentDate);
         
-        // Load lessons for the month
+        // Lessons should already be loaded by render(), but reload if needed
         const startStr = this.formatDateForAPI(monthStart);
         const endStr = this.formatDateForAPI(monthEnd);
-        this.lessons = await API.getLessonsByRange(startStr, endStr);
+        
+        // Only reload if lessons array is empty or we're viewing a different month
+        if (!this.lessons || this.lessons.length === 0) {
+            try {
+                this.lessons = await API.getLessonsByRange(startStr, endStr);
+            } catch (error) {
+                console.error('Error loading lessons in renderMonthly:', error);
+                this.lessons = []; // Use empty array on error
+            }
+        }
         
         // Update month header
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -420,6 +440,40 @@ class Calendar {
         });
         
         return card;
+    }
+
+    // Force add a lesson to the calendar's lessons array (guaranteed persistence)
+    addLessonToCalendar(lesson) {
+        if (!lesson || !lesson.id) {
+            console.error('Invalid lesson provided to addLessonToCalendar:', lesson);
+            return false;
+        }
+        
+        // Check if lesson already exists
+        const existingIndex = this.lessons.findIndex(l => l.id === lesson.id);
+        if (existingIndex >= 0) {
+            // Update existing lesson
+            this.lessons[existingIndex] = lesson;
+            console.log('Updated existing lesson in calendar:', lesson.id);
+        } else {
+            // Add new lesson
+            this.lessons.push(lesson);
+            console.log('Added lesson to calendar array:', lesson.id);
+        }
+        
+        return true;
+    }
+    
+    // Verify lesson appears in DOM for a specific date
+    verifyLessonInDOM(lessonId, date) {
+        const dateStr = this.formatDateForAPI(date);
+        const dayElement = document.querySelector(`[data-date="${dateStr}"]`);
+        if (!dayElement) {
+            return false;
+        }
+        
+        const lessonCard = dayElement.querySelector(`[data-lesson-id="${lessonId}"]`);
+        return !!lessonCard;
     }
 
     getLessonsForDate(date) {

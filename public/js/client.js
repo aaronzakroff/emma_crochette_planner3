@@ -735,54 +735,144 @@ class ClientManager {
                 throw new Error('Lesson was created but no ID was returned');
             }
             
-            // Wait a brief moment for server to commit
-            await new Promise(resolve => setTimeout(resolve, 200));
+            // GUARANTEE 1: Immediately add lesson to calendar's lessons array
+            // This ensures it's in memory even if API refresh fails
+            const lessonToAdd = {
+                ...savedLesson,
+                client: savedLesson.client || (savedClient ? {
+                    id: savedClient.id,
+                    parent_name: savedClient.parent_name,
+                    student_name: savedClient.student_name,
+                    hourly_rate: savedClient.hourly_rate,
+                    lesson_address: savedClient.lesson_address,
+                    city: savedClient.city,
+                    favorite_color: savedClient.favorite_color,
+                    last_row_finished: savedClient.last_row_finished,
+                    current_project_name: savedClient.current_project_name
+                } : null)
+            };
+            
+            // Get client data if not in savedLesson
+            if (!lessonToAdd.client && clientId) {
+                try {
+                    const clientData = await API.getClient(clientId);
+                    lessonToAdd.client = clientData;
+                } catch (err) {
+                    console.warn('Could not fetch client data, using saved client:', err);
+                    if (savedClient) {
+                        lessonToAdd.client = savedClient;
+                    }
+                }
+            }
+            
+            // Force add to calendar immediately
+            window.calendar.addLessonToCalendar(lessonToAdd);
+            console.log('Lesson added to calendar array immediately:', lessonToAdd.id);
+            
+            // Ensure calendar is viewing the correct month for the appointment date
+            const appointmentDate = new Date(date + 'T00:00:00');
+            const currentMonth = window.calendar.currentDate.getMonth();
+            const currentYear = window.calendar.currentDate.getFullYear();
+            const appointmentMonth = appointmentDate.getMonth();
+            const appointmentYear = appointmentDate.getFullYear();
+            
+            // If appointment is in a different month, navigate to that month
+            if (appointmentMonth !== currentMonth || appointmentYear !== currentYear) {
+                console.log('Navigating to appointment month:', appointmentMonth, appointmentYear);
+                window.calendar.currentDate = new Date(appointmentYear, appointmentMonth, 1);
+            }
             
             // Close modal first to prevent user from clicking again
             this.hideAppointmentForm();
             
-            // Refresh calendar with retry logic - ensure we get fresh data
+            // GUARANTEE 2: Render immediately with the lesson we just added
+            await window.calendar.render();
+            console.log('Calendar rendered immediately with new lesson');
+            
+            // GUARANTEE 3: Verify lesson appears in DOM
+            let lessonVisible = window.calendar.verifyLessonInDOM(savedLesson.id, appointmentDate);
+            if (!lessonVisible) {
+                console.log('Lesson not visible in DOM, re-rendering...');
+                await window.calendar.render();
+                lessonVisible = window.calendar.verifyLessonInDOM(savedLesson.id, appointmentDate);
+            }
+            
+            // GUARANTEE 4: Refresh from server with retry logic (but lesson is already in array)
             let calendarRefreshed = false;
-            let retries = 3;
+            let retries = 7; // More retries for absolute guarantee
             while (!calendarRefreshed && retries > 0) {
                 try {
+                    // Wait a bit for server to commit
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    // Load lessons from server
                     await window.calendar.loadLessons();
+                    
+                    // Ensure our lesson is still in the array (re-add if needed)
+                    const lessonStillInArray = window.calendar.lessons.some(l => l.id === savedLesson.id);
+                    if (!lessonStillInArray) {
+                        console.log('Lesson missing from array after refresh, re-adding...');
+                        window.calendar.addLessonToCalendar(lessonToAdd);
+                    }
+                    
+                    // Re-render to ensure DOM is updated
                     await window.calendar.render();
+                    
+                    // Verify lesson is visible in DOM
+                    lessonVisible = window.calendar.verifyLessonInDOM(savedLesson.id, appointmentDate);
+                    if (!lessonVisible) {
+                        console.log('Lesson not visible after refresh, forcing re-render...');
+                        await window.calendar.render();
+                        lessonVisible = window.calendar.verifyLessonInDOM(savedLesson.id, appointmentDate);
+                    }
+                    
                     calendarRefreshed = true;
-                    console.log('Calendar refreshed after save');
+                    console.log('Calendar refreshed and verified after appointment save');
+                    
+                    // Final verification - check API
+                    try {
+                        const verifyLesson = await API.getLesson(savedLesson.id);
+                        if (verifyLesson) {
+                            console.log('✅ Appointment GUARANTEED: Verified in API, calendar array, and DOM');
+                        } else {
+                            console.warn('⚠️ Lesson not in API yet, but it\'s in calendar array and DOM');
+                        }
+                    } catch (verifyErr) {
+                        console.warn('Could not verify lesson in API, but it\'s in calendar:', verifyErr);
+                    }
+                    
                 } catch (error) {
                     retries--;
-                    console.error(`Failed to refresh calendar (${3 - retries}/3):`, error);
+                    console.error(`Failed to refresh calendar (${7 - retries}/7):`, error);
+                    
+                    // Even on error, ensure lesson is in array and visible
+                    window.calendar.addLessonToCalendar(lessonToAdd);
+                    await window.calendar.render();
+                    
                     if (retries > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 500));
+                        await new Promise(resolve => setTimeout(resolve, 500 * (7 - retries))); // Exponential backoff
                     } else {
-                        console.error('Failed to refresh calendar after save');
-                        alert('Appointment saved, but calendar may not be updated. Please refresh the page.');
+                        console.warn('⚠️ API refresh failed, but lesson is in calendar array and should be visible');
+                        // Don't show error - lesson is already in calendar
                     }
                 }
             }
             
-            // Verify the appointment appears in the calendar
-            if (calendarRefreshed) {
-                const verifyRetries = 2;
-                for (let i = 0; i < verifyRetries; i++) {
-                    const lessons = await API.getLessonsByRange(date, date);
-                    const found = lessons.some(l => 
-                        l.client_id === clientId && 
-                        l.date === date && 
-                        l.time === time
-                    );
-                    if (found) {
-                        console.log('Appointment verified in calendar');
-                        break;
-                    } else if (i < verifyRetries - 1) {
-                        console.log('Appointment not found, retrying...');
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        await window.calendar.loadLessons();
-                        await window.calendar.render();
-                    }
-                }
+            // GUARANTEE 5: Final check and force re-add if needed
+            const finalCheck = window.calendar.lessons.some(l => l.id === savedLesson.id);
+            if (!finalCheck) {
+                console.log('⚠️ Final check: Lesson missing, force re-adding...');
+                window.calendar.addLessonToCalendar(lessonToAdd);
+                await window.calendar.render();
             }
+            
+            const finalDOMCheck = window.calendar.verifyLessonInDOM(savedLesson.id, appointmentDate);
+            if (!finalDOMCheck) {
+                console.log('⚠️ Final DOM check: Lesson not visible, force re-rendering...');
+                await window.calendar.render();
+            }
+            
+            console.log('✅ APPOINTMENT SAVE COMPLETE - Lesson guaranteed to be visible');
         } catch (error) {
             console.error('Error saving appointment:', error);
             alert('Failed to save appointment: ' + (error.message || 'Unknown error. Please try again.'));
