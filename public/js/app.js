@@ -156,10 +156,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Attach event listeners to both buttons
     if (fortniteBtn && fortniteOverlay) {
         fortniteBtn.addEventListener('click', handleFortniteClick, { passive: false });
+        console.log('Fortnite header button found and listener attached');
+        // Make button visible
+        fortniteBtn.style.display = 'flex';
+        fortniteBtn.style.visibility = 'visible';
+        fortniteBtn.style.opacity = '1';
+    } else {
+        console.warn('Fortnite header button or overlay not found:', { fortniteBtn: !!fortniteBtn, fortniteOverlay: !!fortniteOverlay });
     }
     
     if (fortniteBarBtn && fortniteOverlay) {
         fortniteBarBtn.addEventListener('click', handleFortniteClick, { passive: false });
+        console.log('Fortnite bar button found and listener attached');
+        // Make button visible
+        fortniteBarBtn.style.display = 'flex';
+        fortniteBarBtn.style.visibility = 'visible';
+        fortniteBarBtn.style.opacity = '1';
+        if (fortniteBarBtn.parentElement) {
+            fortniteBarBtn.parentElement.style.display = 'flex';
+            fortniteBarBtn.parentElement.style.visibility = 'visible';
+        }
+    } else {
+        console.warn('Fortnite bar button or overlay not found:', { fortniteBarBtn: !!fortniteBarBtn, fortniteOverlay: !!fortniteOverlay });
     }
     
     console.log('App initialized');
