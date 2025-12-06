@@ -143,6 +143,31 @@
     text-overflow: ellipsis;
 }
 
+.client-card-address {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.client-card-address .address-link {
+    color: var(--soft-blue-dark);
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-card-address .address-link:hover {
+    color: var(--soft-blue);
+}
+
+.client-card-address .address-link:active {
+    color: var(--soft-pink-dark);
+}
+
 .client-card-delete {
     background: rgba(227, 179, 194, 0.7);
     border: none;
@@ -288,7 +313,12 @@
     }
 
     .client-card-time,
-    .client-card-city {
+    .client-card-city,
+    .client-card-address {
+        font-size: 9px;
+    }
+    
+    .client-card-address .address-link {
         font-size: 9px;
     }
 

@@ -16,51 +16,43 @@ class Calendar {
             this.switchView('weekly');
         });
 
-        // Month navigation
-        document.getElementById('prev-month').addEventListener('click', () => {
+        // Month navigation - use render() to ensure lessons are reloaded
+        document.getElementById('prev-month').addEventListener('click', async () => {
             this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-            this.renderMonthly();
+            await this.render();
         });
-        document.getElementById('next-month').addEventListener('click', () => {
+        document.getElementById('next-month').addEventListener('click', async () => {
             this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-            this.renderMonthly();
+            await this.render();
         });
 
-        // Week navigation
-        document.getElementById('prev-week').addEventListener('click', () => {
+        // Week navigation - use render() to ensure lessons are reloaded
+        document.getElementById('prev-week').addEventListener('click', async () => {
             this.currentWeekStart.setDate(this.currentWeekStart.getDate() - 7);
-            this.renderWeekly();
+            await this.render();
         });
-        document.getElementById('next-week').addEventListener('click', () => {
+        document.getElementById('next-week').addEventListener('click', async () => {
             this.currentWeekStart.setDate(this.currentWeekStart.getDate() + 7);
-            this.renderWeekly();
+            await this.render();
         });
 
         // iOS Safari: Handle resize and orientation changes
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                if (this.viewMode === 'monthly') {
-                    this.renderMonthly();
-                } else {
-                    this.renderWeekly();
-                }
+            resizeTimeout = setTimeout(async () => {
+                await this.render();
             }, 100);
         }, { passive: true });
 
         window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                if (this.viewMode === 'monthly') {
-                    this.renderMonthly();
-                } else {
-                    this.renderWeekly();
-                }
+            setTimeout(async () => {
+                await this.render();
             }, 200);
         });
     }
 
-    switchView(mode) {
+    async switchView(mode) {
         this.viewMode = mode;
         
         // Update toggle buttons
@@ -71,11 +63,8 @@ class Calendar {
         document.getElementById('monthly-calendar').classList.toggle('active', mode === 'monthly');
         document.getElementById('weekly-calendar').classList.toggle('active', mode === 'weekly');
         
-        if (mode === 'monthly') {
-            this.renderMonthly();
-        } else {
-            this.renderWeekly();
-        }
+        // Use render() to ensure lessons are loaded for the current view
+        await this.render();
     }
 
     async loadLessons() {
@@ -97,17 +86,19 @@ class Calendar {
     }
 
     async render() {
-        // Load lessons first if not already loaded for current month
-        try {
-            await this.loadLessons();
-        } catch (error) {
-            console.error('Error loading lessons in render:', error);
-            // Continue with render even if load fails - use existing lessons
-        }
-        
+        // Load lessons for the appropriate view
+        // Monthly view: load for current month
+        // Weekly view: renderWeekly() will load for the week
         if (this.viewMode === 'monthly') {
+            try {
+                await this.loadLessons(); // Load lessons for current month
+            } catch (error) {
+                console.error('Error loading lessons in render:', error);
+                // Continue with render even if load fails - use existing lessons
+            }
             await this.renderMonthly();
         } else {
+            // Weekly view - renderWeekly() will load lessons for the week
             await this.renderWeekly();
         }
     }
@@ -116,11 +107,12 @@ class Calendar {
         const monthStart = this.getMonthStart(this.currentDate);
         const monthEnd = this.getMonthEnd(this.currentDate);
         
-        // Lessons should already be loaded by render(), but reload if needed
+        // Lessons should already be loaded by render(), but reload if needed as a safety check
+        // This ensures we always have the correct lessons for the current month
         const startStr = this.formatDateForAPI(monthStart);
         const endStr = this.formatDateForAPI(monthEnd);
         
-        // Only reload if lessons array is empty or we're viewing a different month
+        // Reload if lessons array is empty (safety check - render() should have loaded them)
         if (!this.lessons || this.lessons.length === 0) {
             try {
                 this.lessons = await API.getLessonsByRange(startStr, endStr);
@@ -129,6 +121,8 @@ class Calendar {
                 this.lessons = []; // Use empty array on error
             }
         }
+        // Note: We trust that render() has already loaded the correct lessons for currentDate
+        // If renderMonthly() is called directly, it should still work if lessons are empty
         
         // Update month header
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -327,7 +321,32 @@ class Calendar {
             cardContent.appendChild(time);
         }
         
-        if (lesson.client.city) {
+        // Add address if available - make it clickable for Apple Maps
+        if (lesson.client.lesson_address) {
+            const addressContainer = document.createElement('div');
+            addressContainer.className = 'client-card-address';
+            
+            // Build full address string (address + city if both exist)
+            let fullAddress = lesson.client.lesson_address;
+            if (lesson.client.city) {
+                fullAddress += ', ' + lesson.client.city;
+            }
+            
+            const addressLink = document.createElement('a');
+            addressLink.textContent = fullAddress;
+            addressLink.className = 'address-link';
+            addressLink.href = this.getAppleMapsUrl(fullAddress);
+            addressLink.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent card click from opening client profile
+                // Open Apple Maps with directions
+                const appleMapsUrl = `https://maps.apple.com/?daddr=${encodeURIComponent(fullAddress)}`;
+                window.location.href = appleMapsUrl;
+            });
+            
+            addressContainer.appendChild(addressLink);
+            cardContent.appendChild(addressContainer);
+        } else if (lesson.client.city) {
+            // If no address but city exists, show city (not clickable)
             const city = document.createElement('div');
             city.className = 'client-card-city';
             city.textContent = lesson.client.city;
@@ -551,6 +570,11 @@ class Calendar {
         if (window.clientManager) {
             window.clientManager.showAppointmentForm(date, time);
         }
+    }
+    
+    getAppleMapsUrl(address) {
+        // Use Apple Maps web URL - works on iOS Safari and opens Apple Maps app
+        return `https://maps.apple.com/?daddr=${encodeURIComponent(address)}`;
     }
 }
 
